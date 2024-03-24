@@ -3,39 +3,56 @@ package learn.apicruduser;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.context.request.WebRequest;
-import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+
+import learn.apicruduser.exceptions.UserExistException;
+import learn.apicruduser.exceptions.UserNotFoundException;
 
 
 @ControllerAdvice
-public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+public class GlobalExceptionHandler {
 
-  @Override
-  protected ResponseEntity<Object> handleMethodArgumentNotValid(
-			MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+  @ExceptionHandler(MethodArgumentNotValidException.class)
+  protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
     ex.getBindingResult().getAllErrors().forEach((error) -> {
         String fieldName = ((FieldError) error).getField();
         String errorMessage = error.getDefaultMessage();
         errors.put(fieldName, errorMessage);
     });
-		return handleExceptionInternal(ex, errors, headers, status, request);
+		return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
 	}
 
-  @ExceptionHandler(RuntimeException.class)
-  protected ResponseEntity<Object> handleInternalServerError(
-			RuntimeException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
-        String bodyOfResponse = "Internal server error";
-        return handleExceptionInternal(ex, bodyOfResponse, 
-          new HttpHeaders(), HttpStatus.INTERNAL_SERVER_ERROR, request);
+  @ExceptionHandler(UserExistException.class)
+  protected ResponseEntity<Object> handleUserExistError(UserExistException ex) {
+        var body = new HashMap<>();
+        body.put("message", ex.getMessage());
+        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+	}
+
+  @ExceptionHandler({UserNotFoundException.class, MethodArgumentTypeMismatchException.class})
+  protected ResponseEntity<Object> handleNotFoundError(RuntimeException ex) {
+        var body = new HashMap<>();
+        if (ex instanceof MethodArgumentTypeMismatchException) {
+          body.put("message", "The user with given id not found");
+        } else {
+          body.put("message", ex.getMessage());
+        }
+        return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
+	}
+
+  @ExceptionHandler(Exception.class)
+  protected ResponseEntity<Object> handleInternalServerError(Exception ex) {
+        System.out.println(ex);
+        var body = new HashMap<>();
+        body.put("message", "Internal server error");
+        return new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR);
 	}
 
 }

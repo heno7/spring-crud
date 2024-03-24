@@ -26,26 +26,25 @@ public class UserService {
         return this.userRepository.findById(id);
     }
 
-    public User updateUser(long id, Optional<User> userUpdateData) {
+    public User updateUser(long id, User userUpdateData) {
         Optional<User> user = this.userRepository.findById(id);
         if(user.isPresent()) {
             User existUser = user.get();
-            User userData = userUpdateData.get();
-            System.out.println(userData);
-            if(userData.getName() != null) {
-                existUser.setName(userData.getName());
+            System.out.println(userUpdateData);
+            if(userUpdateData.getName() != null) {
+                existUser.setName(userUpdateData.getName());
             } else {
                 existUser.setName(existUser.getName());
             }
 
-            if(userData.getEmail() != null) {
-                existUser.setEmail(userData.getEmail());
+            if(userUpdateData.getEmail() != null) {
+                existUser.setEmail(userUpdateData.getEmail());
             } else {
                 existUser.setEmail(existUser.getEmail());
             }
 
-            if(userData.getPassWord() != null) {
-                existUser.setPassWord(userData.getPassWord());
+            if(userUpdateData.getPassWord() != null) {
+                existUser.setPassWord(userUpdateData.getPassWord());
             } else {
                 existUser.setPassWord(existUser.getPassWord());
             }
@@ -55,10 +54,16 @@ public class UserService {
         return null;
     }
 
-    public Optional<User> deleteUser(long id) {
-        Optional<User> user = this.userRepository.findById(id); 
+    public void deleteUser(long id) {
         this.userRepository.deleteById(id);
-        return user;
+    }
+
+    public User getUserByEmail(String email) {
+        return this.userRepository.findByEmail(email);
+    }
+
+    public User getUserByName(String name) {
+      return this.userRepository.findByName(name);
     }
 
 }
